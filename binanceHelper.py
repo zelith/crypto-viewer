@@ -1,5 +1,6 @@
 from binance.client import Client
 
+
 class BinanceHelper:
     def __init__(self, key, secret):
         self._apiKey = key
@@ -12,10 +13,13 @@ class BinanceHelper:
 
     def getFilledOrders(self, targetCoin, stableCoin='USDT'):
         symbol = targetCoin + stableCoin
-        return [{'orderId': order['orderId'], 'quantity': float(order['executedQty']), 'price': float(order['price']), 'side': order['side']} for order in self._client.get_all_orders(symbol=symbol) if order['status'] == 'FILLED']
+        return [dict(orderId=order['orderId'],
+                     quantity=float(order['executedQty']),
+                     price=float(order['price']),
+                     side=order['side'])
+                for order in self._client.get_all_orders(symbol=symbol) if order['status'] == 'FILLED']
 
     def getCurrentCoins(self):
-        self._assetDetails
         pass
 
     def getCurrentCoinPrice(self, coin, stableCoin = 'USDT'):
