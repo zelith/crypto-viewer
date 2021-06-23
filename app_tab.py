@@ -26,16 +26,16 @@ class AppController:
         table_new.setGeometry(QtCore.QRect(10, 70, 761, 431))
         table_new.setObjectName("table_" + coin)
         # fill table
-        order = self._model.getOrdersFor(coin)
-        col_count = len(order[0].keys())
+        trade = self._model.getTradesFor(coin)
+        col_count = len(trade[0].keys())
         table_new.setColumnCount(col_count)
 
-        for col_idx, key in enumerate(order[0].keys()):
+        for col_idx, key in enumerate(trade[0].keys()):
             table_new.setHorizontalHeaderItem(col_idx, QTableWidgetItem(key))
-        for row_idx, order in enumerate(self._model.getOrdersFor(coin)):
+        for row_idx, trade in enumerate(self._model.getTradesFor(coin)):
             table_new.insertRow(row_idx)
-            for col_idx, param in enumerate(order.keys()):
-                table_new.setItem(row_idx, col_idx, QTableWidgetItem(str(order.get(param))))
+            for col_idx, param in enumerate(trade.keys()):
+                table_new.setItem(row_idx, col_idx, QTableWidgetItem(str(trade.get(param))))
 
         # label_new = QtWidgets.QLabel(self.tab_overview)
         # label_new.setGeometry(QtCore.QRect(10, 30, 91, 21))

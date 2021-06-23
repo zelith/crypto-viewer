@@ -6,6 +6,7 @@ class BinanceModel:
         self._client = Client(key, secret)
         self._accountSnapshot = self.getAccountSnapshot()
         self._allOrders = self._getAllOrders()
+        self._allTrades = self._getAllTrades()
 
     def getAccountSnapshot(self) -> dict:
         res = self._client.get_account_snapshot(type='SPOT')
@@ -19,7 +20,7 @@ class BinanceModel:
 
         """
         # default 5 snapshot returned, select first
-        snapshot = self._accountSnapshot.get('snapshotVos')[0]
+        snapshot = self._accountSnapshot.get('snapshotVos')[::-1][0]
         snapshotData = snapshot.get('data')
 
         coinBalanceList = list()
@@ -67,13 +68,51 @@ class BinanceModel:
     def getOrdersFor(self, targetCoin: str):
         return self._allOrders.get(targetCoin)
 
+    def _getTradesFor(self, targetCoin: str, stableCoin: str='USDT'):
+        symbol = targetCoin + stableCoin
+        return [dict(time=trade['time'],
+                     qty=trade['qty'],
+                     quoteQty=trade['quoteQty'],
+                     price=trade['price'],
+                     commission=trade['commission'],
+                     commissionAsset=trade['commissionAsset'],
+                     isBuyer=trade['isBuyer'])
+                for trade in self._client.get_my_trades(symbol=symbol)]
+
+    def getTradesFor(self, targetCoin: str):
+        return self._allTrades.get(targetCoin)
+
+    def _getAllTrades(self):
+        """ return all trades grouped by coin
+
+        """
+        coinTrades = dict()
+        for coin in self.getCoinsList():
+            if coin == 'USDT':
+                continue
+            coinTrades[coin] = self._getTradesFor(coin)
+
+        return coinTrades
+
+    def getAllTrades(self):
+        """ return all trades grouped by coin
+
+        """
+
+        return self._allTrades
+
 
 
 if __name__ == '__main__':
-    model = BinanceModel(key='insert key here',
-                 secret='insert secret here')
+    model = BinanceModel(key='DH1NjBKc1Nw3fy9dXM0ZHbAwHVZCAtkha6TW2G8zEECK7qfUarLpt0KGm2gdUlQf',
+                 secret='FmH3JPxOS4LUffl1wGLG4pEYngkyoNDBXgKF3T9yTqnjQxOBbXVSvVEqhgJEiIes')
 
+    print(model.getAccountSnapshot())
     print(model.getCoinsBalance())
     print(model.getCoinsList())
-    for coin in model._allOrders.keys():
-        print(model.getOrdersFor(coin))
+    # for coin in model._allOrders.keys():
+    #     print(model.getOrdersFor(coin))
+    for coin in model.getCoinsList():
+        if coin == 'USDT':
+            continue
+        print(model._getTradesFor(coin))
