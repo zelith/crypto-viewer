@@ -1,5 +1,5 @@
 from binance.client import Client
-
+import time
 
 class BinanceModel:
     def __init__(self, key: str, secret: str):
@@ -7,6 +7,7 @@ class BinanceModel:
         self._accountSnapshot = self.getAccountSnapshot()
         self._allOrders = self._getAllOrders()
         self._allTrades = self._getAllTrades()
+        self._tickers = self._client.get_all_tickers()
 
     def getAccountSnapshot(self) -> dict:
         res = self._client.get_account_snapshot(type='SPOT')
@@ -15,7 +16,7 @@ class BinanceModel:
             return None
         return res
 
-    def getCoinsBalance(self) -> list:
+    def getCoinsBalance(self) -> dict:
         """ return list of coins mapped to current quantity
 
         """
@@ -23,20 +24,17 @@ class BinanceModel:
         snapshot = self._accountSnapshot.get('snapshotVos')[::-1][0]
         snapshotData = snapshot.get('data')
 
-        coinBalanceList = list()
+        coinBalanceMap = dict()
         for coinBalance in snapshotData.get('balances'):
-            cb = dict(name=coinBalance.get('asset'),
-                      quantity=float(coinBalance.get('free')) + float(coinBalance.get('locked'))
-                      )
-            coinBalanceList.append(cb)
+            coinBalanceMap[coinBalance.get('asset')] = float(coinBalance.get('free')) + float(coinBalance.get('locked'))
 
-        return coinBalanceList
+        return coinBalanceMap
 
     def getCoinsList(self) -> list:
         """ return list of coins with quantity greater than zero
 
         """
-        return [coin.get('name') for coin in self.getCoinsBalance() if coin.get('quantity') > 0]
+        return [coin for coin, qty in self.getCoinsBalance().items() if qty > 0]
 
     def _getAllOrders(self):
         """ return all filled orders grouped by coin
@@ -70,13 +68,13 @@ class BinanceModel:
 
     def _getTradesFor(self, targetCoin: str, stableCoin: str='USDT'):
         symbol = targetCoin + stableCoin
-        return [dict(time=trade['time'],
+        return [dict(time=time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime(int(trade['time'])/1000)),
                      qty=trade['qty'],
                      quoteQty=trade['quoteQty'],
                      price=trade['price'],
-                     commission=trade['commission'],
-                     commissionAsset=trade['commissionAsset'],
-                     isBuyer=trade['isBuyer'])
+                     fees=trade['commission'],
+                     feesAsset=trade['commissionAsset'],
+                     isBuy=trade['isBuyer'])
                 for trade in self._client.get_my_trades(symbol=symbol)]
 
     def getTradesFor(self, targetCoin: str):
@@ -100,6 +98,14 @@ class BinanceModel:
         """
 
         return self._allTrades
+
+    def getCurrentCoinPrice(self, coin, stableCoin = 'USDT'):
+        priceList = self._tickers
+        symbol = coin + stableCoin
+        for coinPrice in priceList:
+            if coinPrice['symbol'] == symbol:
+                return float(coinPrice['price'])
+        return None
 
 
 

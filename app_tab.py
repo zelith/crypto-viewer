@@ -26,23 +26,60 @@ class AppController:
         table_new.setGeometry(QtCore.QRect(10, 70, 761, 431))
         table_new.setObjectName("table_" + coin)
         # fill table
-        trade = self._model.getTradesFor(coin)
-        col_count = len(trade[0].keys())
+        trades = self._model.getTradesFor(coin)
+        col_count = len(trades[0].keys())
         table_new.setColumnCount(col_count)
 
-        for col_idx, key in enumerate(trade[0].keys()):
+        for col_idx, key in enumerate(trades[0].keys()):
             table_new.setHorizontalHeaderItem(col_idx, QTableWidgetItem(key))
-        for row_idx, trade in enumerate(self._model.getTradesFor(coin)):
+        for row_idx, trades in enumerate(self._model.getTradesFor(coin)):
             table_new.insertRow(row_idx)
-            for col_idx, param in enumerate(trade.keys()):
-                table_new.setItem(row_idx, col_idx, QTableWidgetItem(str(trade.get(param))))
+            for col_idx, param in enumerate(trades.keys()):
+                table_new.setItem(row_idx, col_idx, QTableWidgetItem(str(trades.get(param))))
 
-        # label_new = QtWidgets.QLabel(self.tab_overview)
-        # label_new.setGeometry(QtCore.QRect(10, 30, 91, 21))
-        # label_new.setObjectName("label")
+        trades = self._model.getTradesFor(coin)
+        total_buy_price = sum(
+            [float(trade.get('qty')) * float(trade.get('price')) for trade in trades if trade.get('isBuy')])
+        total_sell_price = sum(
+            [float(trade.get('qty')) * float(trade.get('price')) for trade in trades if not trade.get('isBuy')])
+        current_profit = total_sell_price - total_buy_price
+        current_balance = model.getCoinsBalance().get(coin)
+        current_price = model.getCurrentCoinPrice(coin)
+        estimated_running_profit = current_profit + (current_price * current_balance)
+
+        label_balance = QtWidgets.QLabel(tab_new)
+        label_balance.setGeometry(QtCore.QRect(10, 10, 200, 21))
+        label_balance.setObjectName("current_balance")
+
+        label_current_price = QtWidgets.QLabel(tab_new)
+        label_current_price.setGeometry(QtCore.QRect(250, 10, 200, 21))
+        label_current_price.setObjectName("current_price")
+
+        label_total_buy_price = QtWidgets.QLabel(tab_new)
+        label_total_buy_price.setGeometry(QtCore.QRect(10, 30, 200, 21))
+        label_total_buy_price.setObjectName("total_buy_price")
+
+        label_total_sell_price = QtWidgets.QLabel(tab_new)
+        label_total_sell_price.setGeometry(QtCore.QRect(250, 30, 200, 21))
+        label_total_sell_price.setObjectName("total_sell_price")
+
+        label_current_profit = QtWidgets.QLabel(tab_new)
+        label_current_profit.setGeometry(QtCore.QRect(500, 10, 200, 21))
+        label_current_profit.setObjectName("current_profit")
+
+        label_estimated_running_profit = QtWidgets.QLabel(tab_new)
+        label_estimated_running_profit.setGeometry(QtCore.QRect(500, 30, 200, 21))
+        label_estimated_running_profit.setObjectName("estimated_running_profit")
+
         self._view.tabWidget.addTab(tab_new, "")
 
         _translate = QtCore.QCoreApplication.translate
+        label_balance.setText(_translate("MainWindow", "current_balance: " + str(current_balance)))
+        label_current_price.setText(_translate("MainWindow", "current_price: " + str(current_price)))
+        label_total_buy_price.setText(_translate("MainWindow", "total_buy_price: " + str(total_buy_price)))
+        label_total_sell_price.setText(_translate("MainWindow", "total_sell_price: " + str(total_sell_price)))
+        label_current_profit.setText(_translate("MainWindow", "current_profit: " + str(current_profit)))
+        label_estimated_running_profit.setText(_translate("MainWindow", "estimated_running_profit: " + str(estimated_running_profit)))
         self._view.tabWidget.setTabText(self._view.tabWidget.indexOf(tab_new), _translate("MainWindow", coin))
 
 
